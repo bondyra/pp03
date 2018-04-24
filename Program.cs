@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace JankielsProj
 {
-    public class Jankiels
+    public class Application
     {
         private readonly string filePath = "./positions.txt";
         private double hearingRange = 3.0d;
@@ -13,7 +13,7 @@ namespace JankielsProj
             return Math.Sqrt(Math.Pow(b.X-a.X,2) + Math.Pow(b.Y-a.Y,2));
         }
 
-        private void buildTopology(Jankiel[] jankiels)
+        private void buildGraph(Jankiel[] jankiels)
         {
             for (int i=0;i<jankiels.Length;i++)
             {
@@ -21,23 +21,23 @@ namespace JankielsProj
                 {
                     if (i<j && euclideanDistance(jankiels[i],jankiels[j]) <= hearingRange)
                     {
-                        jankiels[i].addNeighbor(jankiels[j]);
-                        jankiels[j].addNeighbor(jankiels[i]);
+                        jankiels[i].AddNeighbor(jankiels[j]);
+                        jankiels[j].AddNeighbor(jankiels[i]);
                     }
                 }
             }
         }
-        public void run ()
+        public void Run ()
         {
-            JankielsReader reader = new JankielsReader(this.filePath);
+            Reader reader = new Reader(this.filePath);
             var jankiels = reader.Read();
-            buildTopology(jankiels);
+            buildGraph(jankiels);
             foreach (var jankiel in jankiels)
             {
                 new Thread(() =>
                 {
                     Thread.CurrentThread.IsBackground = true;
-                    jankiel.run();
+                    jankiel.Run();
                 }).Start();
             }
             while(true);
@@ -47,7 +47,7 @@ namespace JankielsProj
     {
         static void Main(string[] args)
         {
-            (new Jankiels()).run();
+            (new Application()).Run();
         }
     }
 }

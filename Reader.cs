@@ -4,12 +4,12 @@ using System.Diagnostics;
 
 namespace JankielsProj
 {
-    public class JankielsReader
+    public class Reader
     {
         private bool init = true;
         private string path;
         private int jankielsCount = -1;
-        public JankielsReader(string path)
+        public Reader(string path)
         {
             this.path = path;
         }

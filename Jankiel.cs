@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Text;
 using RabbitMQ.Client;
@@ -12,6 +13,8 @@ namespace JankielsProj
         public int Y {get; private set;}
         public string QueueName {get; private set;}
 
+        private readonly double jankielPlayTime = 3.0d;
+
         private List<Jankiel> neighbors = new List<Jankiel>();
 
         public Jankiel(int _x, int _y, string _queueName)
@@ -21,13 +24,40 @@ namespace JankielsProj
             QueueName = _queueName;
         }
 
-        public void addNeighbor (Jankiel neighbor)
+        public void AddNeighbor (Jankiel neighbor)
         {
             this.neighbors.Add(neighbor);
         }
 
+        public void Run()
+        {
+            System.Console.WriteLine($"{QueueName} started, neighbor count: {this.neighbors.Count}.");
+            //uruchom consumera
+            var factory = new ConnectionFactory() { HostName = "localhost" };
+            using(var connection = factory.CreateConnection())
+            using(var channel = connection.CreateModel())
+            {
+                startConsuming(connection, channel);
+                //logika algorytmu
+                runAlgorithm();
+            }
+        }
+
+        /*///// logika algorytmu /////*/
+
+        //co robić przy odbiorze wiadomości?
+        private EventHandler<BasicDeliverEventArgs> messageHandler ()
+        {
+            return (model, ea) =>
+                {
+                    var body = ea.Body;
+                    var message = Encoding.UTF8.GetString(body);
+                    Console.WriteLine($"[x] received in {QueueName} : {message}");
+                };
+        }
+
         //logika algorytmu
-        private void logika ()
+        private void runAlgorithm()
         {
             sendToAll($"To ja {QueueName}.");
 
@@ -36,33 +66,17 @@ namespace JankielsProj
         }
 
 
-        public void run()
+        private void runMIS()
         {
-            System.Console.WriteLine($"{QueueName} started, neighbor count: {this.neighbors.Count}.");
-            //uruchom consumera
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using(var connection = factory.CreateConnection())
-            using(var channel = connection.CreateModel())
-            {
-                    channel.QueueDeclare(queue: QueueName,
-                                        durable: false,
-                                        exclusive: false,
-                                        autoDelete: false,
-                                        arguments: null);
 
-                    var consumer = new EventingBasicConsumer(channel);
-                    consumer.Received += messageHandler();
-
-                    channel.BasicConsume(queue: QueueName,
-                                        autoAck: true,
-                                        consumer: consumer);
-
-            //logika algorytmu (?)
-            logika();
-            }
         }
 
-        //wysylka wiadomosci
+        private void play()
+        {
+            Thread.Sleep((int)this.jankielPlayTime*1000);
+        }
+
+        /*///// opakowywacze komunikacji /////*/
         private void sendToAll (string message)
         {
             foreach (var neighbor in neighbors)
@@ -71,7 +85,7 @@ namespace JankielsProj
             }
         }
 
-        public void send(string queueName, string message)
+        private void send(string queueName, string message)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             using(var connection = factory.CreateConnection())
@@ -92,15 +106,20 @@ namespace JankielsProj
             }
         }
 
-        //co robic przy odbiorze wiadomosci?
-        private EventHandler<BasicDeliverEventArgs> messageHandler ()
+        private void startConsuming(IConnection connection, IModel model)
         {
-            return (model, ea) =>
-                {
-                    var body = ea.Body;
-                    var message = Encoding.UTF8.GetString(body);
-                    Console.WriteLine($"[x] received in {QueueName} : {message}");
-                };
+            model.QueueDeclare(queue: QueueName,
+                                durable: false,
+                                exclusive: false,
+                                autoDelete: false,
+                                arguments: null);
+
+            var consumer = new EventingBasicConsumer(model);
+            consumer.Received += messageHandler();
+
+            model.BasicConsume(queue: QueueName,
+                                autoAck: true,
+                                consumer: consumer);
         }
     }
 }
