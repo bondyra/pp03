@@ -31,7 +31,8 @@ namespace JankielsProj
                     Debug.Assert(chunks != null && chunks.Length == 2);
                     int x = int.Parse(chunks[0]);
                     int y = int.Parse(chunks[1]);
-                    jankiels.Add(new Jankiel(x, y, $"Jankiel{cnt++}"));
+                    cnt++;
+                    jankiels.Add(new Jankiel(x, y, $"Jankiel({x},{y})", jankielsCount));
                 }
             }
             Debug.Assert(jankiels.Count == this.jankielsCount);

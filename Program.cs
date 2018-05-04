@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Linq;
 
 namespace JankielsProj
 {
@@ -26,6 +27,9 @@ namespace JankielsProj
                     }
                 }
             }
+            int d = jankiels.Select(x=> x.Neighbors.Count).Max();
+            foreach (var jankiel in jankiels)
+                jankiel.D = d;
         }
         public void Run ()
         {
