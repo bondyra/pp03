@@ -148,8 +148,7 @@ namespace JankielsProj
             {
                 for (int j = 0; j < M * intLog(n); j++)
                 {
-                    monitor.setRoundNumber(QueueName, roundNumber);
-                    logEvent($"{QueueName} zaczyna runde {roundNumber}");
+               //     logEvent($"{QueueName} zaczyna runde {roundNumber}");
                     if (isSet)
                     {
                         sendToAll(roundNumber + noB1);
@@ -195,7 +194,7 @@ namespace JankielsProj
                 }
             }
 
-            logEvent($"{QueueName} Skonczyl ustalac");
+          //  logEvent($"{QueueName} Skonczyl ustalac");
             return ret;
         }
 

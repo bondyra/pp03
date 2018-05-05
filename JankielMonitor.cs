@@ -16,23 +16,19 @@ namespace JankielsProj
         {
             lock (jankielLock)
             {
+                if (!roundMap.ContainsKey(roundNumber))
+                {
+                    roundMap.Add(roundNumber, neighborCount);
+                //    System.Console.WriteLine($"Jankiel {queuename} ustawia runde {roundNumber} na {roundMap[roundNumber]}");
+                }
                 roundMap[roundNumber]--;
                 bCount = bCount || B;
                 if (roundMap[roundNumber] == 0)
                 {
                     
-                    System.Console.WriteLine($" {queuename}Koniec rundy {roundNumber}");
+                 //   System.Console.WriteLine($" {queuename}Koniec rundy {roundNumber}");
                     mainThreadQueue.Pulse();
                 }
-            }
-        }
-
-        public void setRoundNumber(string queue, int roundNumber)
-        {
-            lock (jankielLock)
-            {
-                roundMap.Add(roundNumber, neighborCount);
-             //   System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber} na {roundMap[roundNumber]}");
             }
         }
 
