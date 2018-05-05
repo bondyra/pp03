@@ -39,19 +39,27 @@ namespace JankielsProj
             buildGraph(jankiels);
             foreach(var j in jankiels)
             {
-                j.monitor.SetNeighborCount(j.Neighbors.Count);
-                j.monitor2.SetNeighborCount(j.Neighbors.Count);
+                //ustawienie liczby sąsiadów którzy nie grali na pierwszą rundę
+                j.firstExchangeMonitor.SetNeighborCount(j.Neighbors.Count);
+                j.secondExchangeMonitor.SetNeighborCount(j.Neighbors.Count);
                 j.neighborCount = j.Neighbors.Count;
             }
-
+            int round = 0;
             while(true)
             {
+                int notPlayedCount = jankiels.Select(x=> x.playedAlready ? 0 : 1).Sum();
+                if (notPlayedCount == 0)//można skończyć program
+                    break;
+                //kolejne przejście pętli to kolejna runda 
+                Console.WriteLine($"*** RUNDA {++round} ***");
+
                 WaitHandle[] waitHandles = new WaitHandle[jankiels.Length];
                 for (int i = 0; i < jankiels.Length; i++)
                 {
                     var j = i;
                     var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
+                    //praca każdego z jankiela (który jeszcze nie grał):
                     var thread = new Thread(() =>
                     {
                         Thread.CurrentThread.IsBackground = true;
@@ -63,10 +71,10 @@ namespace JankielsProj
                     waitHandles[i] = handle;
                     thread.Start();
                 }
+                //czekanie na zakończenie grania/czekania na granie:
                 WaitHandle.WaitAll(waitHandles);
-                //Console.WriteLine($"{cntr++}");
             }
-
+            Console.WriteLine("Wszyscy Jankiele zagrali - koniec.");
         }
     }
     class Program
