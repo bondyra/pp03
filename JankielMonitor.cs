@@ -31,8 +31,8 @@ namespace JankielsProj
         {
             lock (jankielLock)
             {
-                System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber}");
                 roundMap.Add(roundNumber, neighborCount);
+                System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber} na {roundMap[roundNumber]}");
             }
         }
 
@@ -42,7 +42,7 @@ namespace JankielsProj
             {
                 //System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
                 System.Console.WriteLine($"{queue} Biore runde {roundNumber} {roundMap.Count}");
-                if (roundMap[roundNumber] > 0)
+                if (roundMap.ContainsKey(roundNumber) && roundMap[roundNumber] > 0)
                 {
                     System.Console.WriteLine($"Czekam bo runda {roundNumber} trwa");
                     mainThreadQueue.Wait(jankielLock);

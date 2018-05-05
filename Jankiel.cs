@@ -167,7 +167,7 @@ namespace JankielsProj
                         v = 0;
                         bool success = binom(1d / (Math.Pow(2, (double) (intLog(D) - i))));
                         // broadcast B to all neighbors
-                        sendToAll(success ? roundNumber + B1 : roundNumber +noB1);
+                        sendToAll(success ? roundNumber + B1 : roundNumber + noB1);
                         // logEvent($"{QueueName} waitIfNecessary exchange 1");
                         wasB = monitor.WaitIfNecessary(QueueName, roundNumber);
                         // v ← 1
@@ -176,7 +176,7 @@ namespace JankielsProj
                         if (wasB) v = 0;
                         // (2nd exchange)
                         // if v = 1 then
-                        sendToAll(v == 1 ? B2 : noB2);
+                        sendToAll(v == 1 ? roundNumber + B2 : roundNumber + noB2);
                         //logEvent($"{QueueName} waitIfNecessary exchange 2");
                         wasB = monitor2.WaitIfNecessary(QueueName, roundNumber);
                         if (v == 1)
