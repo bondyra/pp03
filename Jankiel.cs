@@ -52,17 +52,15 @@ namespace JankielsProj
 
         public void Run()
         {
-
             System.Console.WriteLine($"{QueueName} started, neighbor count: {this.neighborCount}.");
             //uruchom consumera
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() {HostName = "localhost"};
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 startConsuming(connection, channel);
                 //logika algorytmu
                 runAlgorithm();
-
             }
         }
 
@@ -72,70 +70,61 @@ namespace JankielsProj
         private EventHandler<BasicDeliverEventArgs> messageHandler()
         {
             return (model, ea) =>
+            {
+                var body = ea.Body;
+                var message = Encoding.UTF8.GetString(body);
+                if (message == noB1)
                 {
-                    var body = ea.Body;
-                    var message = Encoding.UTF8.GetString(body);
-                    if (message == noB1)
-                    {
-                        monitor.DecreaseCounter(false, QueueName);
-                    }
-                    else if (message == B1)
-                    {
-                        monitor.DecreaseCounter(true, QueueName);
-                    }
-                    else if (message == B2)
-                    {
-                        monitor2.DecreaseCounter(true, QueueName);
-                    }
-                    else if (message == noB2)
-                    {
-                        monitor2.DecreaseCounter(false, QueueName);
-                    }
-                    else if (message == endPlay)
-                    {
-                        lock (lockobj)
-                        {
-                            playedCount++;
-
-                        }
-                    }
-                };
+                    monitor.DecreaseCounter(false, QueueName);
+                }
+                else if (message == B1)
+                {
+                    monitor.DecreaseCounter(true, QueueName);
+                }
+                else if (message == B2)
+                {
+                    monitor2.DecreaseCounter(true, QueueName);
+                }
+                else if (message == noB2)
+                {
+                    monitor2.DecreaseCounter(false, QueueName);
+                }
+                else if (message == endPlay)
+                {
+                    monitor.SetNeighborCount(--neighborCount);
+                    monitor2.SetNeighborCount(--neighborCount);
+                    playMonitor.NotifyEndPlay();
+                }
+            };
         }
 
         //logika algorytmu
         public void runAlgorithm()
         {
-
-            bool anyonePlaying = runMIS();
-            if (!anyonePlaying)
+            while (!playedAlready)
             {
-                logEvent($"{QueueName} gra.");
-                sendToAll(endPlay);
-                playedAlready = true;
-                return;
-            }
-            else
-            {
-                //logEvent($"{QueueName} czeka na koniec grania {anyonePlaying}.");
-                Thread.Sleep(3000);
-                lock (lockobj)
+                bool anyonePlaying = runMIS();
+                if (!anyonePlaying)
                 {
-                    neighborCount -= playedCount;
-                    playedCount = 0;
+                    logEvent($"{QueueName} gra.");
+                    Thread.Sleep(jankielPlayTime);
+                    playedAlready = true;
+                    logEvent($"{QueueName} skonczyl grac.");
+                    sendToAll(endPlay);
+                    return;
                 }
-                //logEvent($"{QueueName}: set neighbor count 2 to {neighborCount}");
-                monitor.SetNeighborCount(neighborCount);
-                monitor2.SetNeighborCount(neighborCount);
-
-                //logEvent($"{QueueName} skonczyl czekac na koniec grania {anyonePlaying}.");
+                else
+                {
+                    logEvent($"{QueueName} czeka na koniec grania.");
+                    playMonitor.WaitForEndPlaying();
+                    logEvent($"{QueueName} skonczyl czekac na koniec grania.");
+                }
             }
-
-
         }
 
         private static int intLog(int k)
         {
-            return (int)Math.Log(k, 2);
+            return (int) Math.Log(k, 2);
         }
 
         private static bool binom(double probability)
@@ -146,26 +135,26 @@ namespace JankielsProj
 
         private bool runMIS()
         {
-            int v; bool wasB;
+            logEvent($"{QueueName} Zaczyna ustalac {neighborCount}");
+            int v;
+            bool wasB;
             bool isSet = false, ret = false;
-            if (neighborCount == 0)
-                return false;
             for (int i = 0; i < intLog(D); i++)
             {
                 for (int j = 0; j < M * intLog(n); j++)
                 {
                     if (isSet)
                     {
-                        sendToAll(noB1);
-                        wasB = monitor.WaitIfNecessary(QueueName);
-                        sendToAll(noB2);
-                        wasB = monitor2.WaitIfNecessary(QueueName);
+//                        sendToAll(noB1);
+//                        monitor.WaitIfNecessary(QueueName);
+//                        sendToAll(noB2);
+//                        monitor2.WaitIfNecessary(QueueName);
                     }
                     else
                     {
                         // (1st exchange)
                         v = 0;
-                        bool success = binom(1d / (Math.Pow(2, (double)(intLog(D) - i))));
+                        bool success = binom(1d / (Math.Pow(2, (double) (intLog(D) - i))));
                         // broadcast B to all neighbors
                         sendToAll(success ? B1 : noB1);
                         // logEvent($"{QueueName} waitIfNecessary exchange 1");
@@ -180,23 +169,30 @@ namespace JankielsProj
                         //logEvent($"{QueueName} waitIfNecessary exchange 2");
                         wasB = monitor2.WaitIfNecessary(QueueName);
                         if (v == 1)
-                        {//mamy gwarancje ze nikt nie gra
+                        {
+                            logEvent($"{QueueName} Wygral!");
+                            //mamy gwarancje ze nikt nie gra
+                            ret = false;
                             isSet = true;
                         }
                         else if (wasB)
-                        {//ktos inny gra
-                            isSet = true;
+                        {
+                            logEvent($"{QueueName} Przegral!");
+                            //ktos inny gra
                             ret = true;
+                            isSet = true;
                         }
                     }
                 }
             }
+            
+            logEvent($"{QueueName} Skonczyl ustalac");
             return ret;
         }
 
         private void play()
         {
-            Thread.Sleep((int)this.jankielPlayTime * 1000);
+            Thread.Sleep((int) this.jankielPlayTime * 1000);
         }
 
         /*///// opakowywacze komunikacji /////*/
@@ -210,21 +206,21 @@ namespace JankielsProj
 
         private void send(string queueName, string message)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() {HostName = "localhost"};
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 channel.QueueDeclare(queue: queueName,
-                                    durable: false,
-                                    exclusive: false,
-                                    autoDelete: false,
-                                    arguments: null);
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
 
                 var body = Encoding.UTF8.GetBytes(message);
                 channel.BasicPublish(exchange: "",
-                                    routingKey: queueName,
-                                    basicProperties: null,
-                                    body: body);
+                    routingKey: queueName,
+                    basicProperties: null,
+                    body: body);
                 //logEvent($"[{this.QueueName}] wysyla do {queueName} : {message}");
             }
         }
@@ -232,17 +228,17 @@ namespace JankielsProj
         private void startConsuming(IConnection connection, IModel model)
         {
             model.QueueDeclare(queue: QueueName,
-                                durable: false,
-                                exclusive: false,
-                                autoDelete: false,
-                                arguments: null);
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
 
             var consumer = new EventingBasicConsumer(model);
             consumer.Received += messageHandler();
 
             model.BasicConsume(queue: QueueName,
-                                autoAck: true,
-                                consumer: consumer);
+                autoAck: true,
+                consumer: consumer);
         }
 
         public static void logEvent(String eventText)
