@@ -8,6 +8,7 @@ namespace JankielsProj
     {
         private readonly string filePath = "./positions.txt";
         private double hearingRange = 3.0d;
+        private int cntr = 0;
 
         private static double euclideanDistance (Jankiel a, Jankiel b)
         {
@@ -36,15 +37,36 @@ namespace JankielsProj
             Reader reader = new Reader(this.filePath);
             var jankiels = reader.Read();
             buildGraph(jankiels);
-            foreach (var jankiel in jankiels)
+            foreach(var j in jankiels)
             {
-                new Thread(() =>
-                {
-                    Thread.CurrentThread.IsBackground = true;
-                    jankiel.Run();
-                }).Start();
+                j.monitor.SetNeighborCount(j.Neighbors.Count);
+                j.monitor2.SetNeighborCount(j.Neighbors.Count);
+                j.neighborCount = j.Neighbors.Count;
             }
-            while(true);
+
+            while(true)
+            {
+                WaitHandle[] waitHandles = new WaitHandle[jankiels.Length];
+                for (int i = 0; i < jankiels.Length; i++)
+                {
+                    var j = i;
+                    var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+                    var thread = new Thread(() =>
+                    {
+                        Thread.CurrentThread.IsBackground = true;
+                        if(jankiels[j].playedAlready == false)
+                            jankiels[j].Run();
+                        handle.Set();
+                    });
+
+                    waitHandles[i] = handle;
+                    thread.Start();
+                }
+                WaitHandle.WaitAll(waitHandles);
+                //Console.WriteLine($"{cntr++}");
+            }
+
         }
     }
     class Program

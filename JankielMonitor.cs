@@ -5,34 +5,34 @@ namespace JankielsProj
         private readonly object jankielLock = new object();
         private int counter;
         private int neighborCount = -1;
-        private int bCount = 0;
+        private bool bCount = false;
         private ConditionVariable mainThreadQueue = new ConditionVariable();
 
         //ENTRIES
-        public void DecreaseCounter (bool B, string queuename)
+        public void DecreaseCounter(bool B, string queuename)
         {
             lock (jankielLock)
             {
-                if (B) bCount++;
+                bCount = bCount || B;
                 //System.Console.WriteLine($"{queuename}: decrease counter from {counter}.");
                 counter--;
                 if (counter == 0){
-                    System.Console.WriteLine($"{queuename} counter :{counter}  pulsam");
+                   // System.Console.WriteLine($"{queuename} counter :{counter}  pulsam");
                     mainThreadQueue.Pulse();
                 }
             }
         }
         
-        public int WaitIfNecessary(string queue)
+        public bool WaitIfNecessary(string queue)
         {
             lock(jankielLock)
             {
-                //System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
+                System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
                 if (counter>0)
                     mainThreadQueue.Wait(jankielLock);
                 counter = neighborCount;
-                int B = bCount;
-                bCount = 0;
+                bool B = bCount;
+                bCount = false;
                 return B; 
             }
         }
