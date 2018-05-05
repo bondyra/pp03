@@ -27,7 +27,7 @@ namespace JankielsProj
         {
             lock(jankielLock)
             {
-                System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
+                //System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
                 if (counter>0)
                     mainThreadQueue.Wait(jankielLock);
                 counter = neighborCount;

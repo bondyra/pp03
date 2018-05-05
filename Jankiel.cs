@@ -62,7 +62,7 @@ namespace JankielsProj
                 startConsuming(connection, channel);
                 //logika algorytmu
                 runAlgorithm();
-
+                channel.QueuePurge(QueueName);
             }
         }
 
