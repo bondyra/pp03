@@ -76,25 +76,21 @@ namespace JankielsProj
                 if (message.Contains(noB1))
                 {
                     var roundNumber = getRoundNumberFromMessage(message);
-                    logEvent($"B1 Round number {roundNumber}");
                     monitor.DecreaseCounter(false, QueueName, roundNumber);
                 }
                 else if (message.Contains(B1))
                 {
                     var roundNumber = getRoundNumberFromMessage(message);
-                    logEvent($"B1 Round number {roundNumber}");
                     monitor.DecreaseCounter(true, QueueName, roundNumber);
                 }
                 else if (message.Contains(B2))
                 {
                     var roundNumber = getRoundNumberFromMessage(message);
-                    logEvent($"B2 Round number {roundNumber}");
                     monitor2.DecreaseCounter(true, QueueName, roundNumber);
                 }
                 else if (message.Contains(noB2))
                 {
                     var roundNumber = getRoundNumberFromMessage(message);
-                    logEvent($"B2 Round number {roundNumber}");
                     monitor2.DecreaseCounter(false, QueueName, roundNumber);
                 }
                 else if (message == endPlay)
@@ -156,9 +152,9 @@ namespace JankielsProj
                     logEvent($"{QueueName} zaczyna runde {roundNumber}");
                     if (isSet)
                     {
-                        sendToAll(noB1);
+                        sendToAll(roundNumber + noB1);
                         monitor.WaitIfNecessary(QueueName, roundNumber);
-                        sendToAll(noB2);
+                        sendToAll(roundNumber + noB2);
                         monitor2.WaitIfNecessary(QueueName, roundNumber);
                     }
                     else
@@ -201,11 +197,6 @@ namespace JankielsProj
 
             logEvent($"{QueueName} Skonczyl ustalac");
             return ret;
-        }
-
-        private void play()
-        {
-            Thread.Sleep((int) this.jankielPlayTime * 1000);
         }
 
         /*///// opakowywacze komunikacji /////*/

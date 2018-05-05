@@ -21,7 +21,7 @@ namespace JankielsProj
                 if (roundMap[roundNumber] == 0)
                 {
                     
-                    System.Console.WriteLine($"Koniec rundy {roundNumber}");
+                    System.Console.WriteLine($" {queuename}Koniec rundy {roundNumber}");
                     mainThreadQueue.Pulse();
                 }
             }
@@ -32,7 +32,7 @@ namespace JankielsProj
             lock (jankielLock)
             {
                 roundMap.Add(roundNumber, neighborCount);
-                System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber} na {roundMap[roundNumber]}");
+             //   System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber} na {roundMap[roundNumber]}");
             }
         }
 
@@ -41,10 +41,10 @@ namespace JankielsProj
             lock (jankielLock)
             {
                 //System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
-                System.Console.WriteLine($"{queue} Biore runde {roundNumber} {roundMap.Count}");
+              //  System.Console.WriteLine($"{queue} Biore runde {roundNumber} {roundMap.Count}");
                 if (roundMap.ContainsKey(roundNumber) && roundMap[roundNumber] > 0)
                 {
-                    System.Console.WriteLine($"Czekam bo runda {roundNumber} trwa");
+                 //   System.Console.WriteLine($"Czekam bo runda {roundNumber} trwa");
                     mainThreadQueue.Wait(jankielLock);
                 }
            
