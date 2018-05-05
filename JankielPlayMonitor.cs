@@ -1,16 +1,20 @@
+using System;
+
 namespace JankielsProj
 {
     public class JankielPlayMonitor
     {
         private readonly object jankielPlayLock = new object();
+        private bool shouldWait = true;
         private ConditionVariable mainThreadQueue = new ConditionVariable();
 
         //ENTRIES
-        public void NotifyEndPlay ()
+        public void NotifyEndPlay()
         {
             lock (jankielPlayLock)
             {
-                 mainThreadQueue.Pulse();
+                shouldWait = false;
+                mainThreadQueue.Pulse();
             }
         }
 
@@ -18,9 +22,10 @@ namespace JankielsProj
         {
             lock (jankielPlayLock)
             {
-                mainThreadQueue.Wait(jankielPlayLock);
+                if (shouldWait)
+                    mainThreadQueue.Wait(jankielPlayLock);
+                shouldWait = true;
             }
         }
-
     }
 }
