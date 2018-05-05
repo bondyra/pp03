@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace JankielsProj
 {
     public class JankielMonitor
@@ -6,32 +8,46 @@ namespace JankielsProj
         private int counter;
         private int neighborCount = -1;
         private bool bCount = false;
+        private Dictionary<int, int> roundMap = new Dictionary<int, int>();
         private ConditionVariable mainThreadQueue = new ConditionVariable();
 
         //ENTRIES
-        public void DecreaseCounter(bool B, string queuename)
+        public void DecreaseCounter(bool B, string queuename, int roundNumber)
         {
             lock (jankielLock)
             {
+                roundMap[roundNumber]--;
                 bCount = bCount || B;
-                //System.Console.WriteLine($"{queuename}: decrease counter from {counter}.");
-                counter--;
-                if (counter == 0)
+                if (roundMap[roundNumber] == 0)
                 {
-                    // System.Console.WriteLine($"{queuename} counter :{counter}  pulsam");
+                    
+                    System.Console.WriteLine($"Koniec rundy {roundNumber}");
                     mainThreadQueue.Pulse();
                 }
             }
         }
 
-        public bool WaitIfNecessary(string queue)
+        public void setRoundNumber(string queue, int roundNumber)
+        {
+            lock (jankielLock)
+            {
+                System.Console.WriteLine($"Jankiel {queue} ustawia runde {roundNumber}");
+                roundMap.Add(roundNumber, neighborCount);
+            }
+        }
+
+        public bool WaitIfNecessary(string queue, int roundNumber)
         {
             lock (jankielLock)
             {
                 //System.Console.WriteLine($"{queue} : waitIfNecessary for {neighborCount}, counter {counter}");
-                if (counter > 0)
+                System.Console.WriteLine($"{queue} Biore runde {roundNumber} {roundMap.Count}");
+                if (roundMap[roundNumber] > 0)
+                {
+                    System.Console.WriteLine($"Czekam bo runda {roundNumber} trwa");
                     mainThreadQueue.Wait(jankielLock);
-                counter = neighborCount;
+                }
+           
                 bool B = bCount;
                 bCount = false;
                 return B;

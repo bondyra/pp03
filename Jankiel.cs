@@ -9,10 +9,10 @@ namespace JankielsProj
 {
     public class Jankiel
     {
-        private static string noB1 = "no B exchange 1";
-        private static string B1 = "B exchange 1";
-        private static string noB2 = "no B exchange 2";
-        private static string B2 = "B exchange 2";
+        private static string noB1 = "|no B exchange 1";
+        private static string B1 = "|B exchange 1";
+        private static string noB2 = "|no B exchange 2";
+        private static string B2 = "|B exchange 2";
         private static string endPlay = "me play";
         private static int M = 10;
         private int n;
@@ -73,21 +73,29 @@ namespace JankielsProj
             {
                 var body = ea.Body;
                 var message = Encoding.UTF8.GetString(body);
-                if (message == noB1)
+                if (message.Contains(noB1))
                 {
-                    monitor.DecreaseCounter(false, QueueName);
+                    var roundNumber = getRoundNumberFromMessage(message);
+                    logEvent($"B1 Round number {roundNumber}");
+                    monitor.DecreaseCounter(false, QueueName, roundNumber);
                 }
-                else if (message == B1)
+                else if (message.Contains(B1))
                 {
-                    monitor.DecreaseCounter(true, QueueName);
+                    var roundNumber = getRoundNumberFromMessage(message);
+                    logEvent($"B1 Round number {roundNumber}");
+                    monitor.DecreaseCounter(true, QueueName, roundNumber);
                 }
-                else if (message == B2)
+                else if (message.Contains(B2))
                 {
-                    monitor2.DecreaseCounter(true, QueueName);
+                    var roundNumber = getRoundNumberFromMessage(message);
+                    logEvent($"B2 Round number {roundNumber}");
+                    monitor2.DecreaseCounter(true, QueueName, roundNumber);
                 }
-                else if (message == noB2)
+                else if (message.Contains(noB2))
                 {
-                    monitor2.DecreaseCounter(false, QueueName);
+                    var roundNumber = getRoundNumberFromMessage(message);
+                    logEvent($"B2 Round number {roundNumber}");
+                    monitor2.DecreaseCounter(false, QueueName, roundNumber);
                 }
                 else if (message == endPlay)
                 {
@@ -139,16 +147,19 @@ namespace JankielsProj
             int v;
             bool wasB;
             bool isSet = false, ret = false;
+            int roundNumber = 0;
             for (int i = 0; i < intLog(D); i++)
             {
                 for (int j = 0; j < M * intLog(n); j++)
                 {
+                    monitor.setRoundNumber(QueueName, roundNumber);
+                    logEvent($"{QueueName} zaczyna runde {roundNumber}");
                     if (isSet)
                     {
-//                        sendToAll(noB1);
-//                        monitor.WaitIfNecessary(QueueName);
-//                        sendToAll(noB2);
-//                        monitor2.WaitIfNecessary(QueueName);
+                        sendToAll(noB1);
+                        monitor.WaitIfNecessary(QueueName, roundNumber);
+                        sendToAll(noB2);
+                        monitor2.WaitIfNecessary(QueueName, roundNumber);
                     }
                     else
                     {
@@ -156,9 +167,9 @@ namespace JankielsProj
                         v = 0;
                         bool success = binom(1d / (Math.Pow(2, (double) (intLog(D) - i))));
                         // broadcast B to all neighbors
-                        sendToAll(success ? B1 : noB1);
+                        sendToAll(success ? roundNumber + B1 : roundNumber +noB1);
                         // logEvent($"{QueueName} waitIfNecessary exchange 1");
-                        wasB = monitor.WaitIfNecessary(QueueName);
+                        wasB = monitor.WaitIfNecessary(QueueName, roundNumber);
                         // v ← 1
                         if (success) v = 1;
                         // if received a message B then v ← 0;
@@ -167,7 +178,7 @@ namespace JankielsProj
                         // if v = 1 then
                         sendToAll(v == 1 ? B2 : noB2);
                         //logEvent($"{QueueName} waitIfNecessary exchange 2");
-                        wasB = monitor2.WaitIfNecessary(QueueName);
+                        wasB = monitor2.WaitIfNecessary(QueueName, roundNumber);
                         if (v == 1)
                         {
                             logEvent($"{QueueName} Wygral!");
@@ -183,9 +194,11 @@ namespace JankielsProj
                             isSet = true;
                         }
                     }
+
+                    roundNumber++;
                 }
             }
-            
+
             logEvent($"{QueueName} Skonczyl ustalac");
             return ret;
         }
@@ -239,6 +252,13 @@ namespace JankielsProj
             model.BasicConsume(queue: QueueName,
                 autoAck: true,
                 consumer: consumer);
+        }
+
+        private int getRoundNumberFromMessage(string message)
+        {
+            var index = message.IndexOf("|");
+            var roundNumber = message.Substring(0, index);
+            return Int32.Parse(roundNumber);
         }
 
         public static void logEvent(String eventText)
