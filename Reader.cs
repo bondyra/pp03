@@ -16,6 +16,7 @@ namespace JankielsProj
 
         public Jankiel[] Read ()
         {
+            var id = System.DateTime.Now.Millisecond;
             List<Jankiel> jankiels  = new List<Jankiel>();
             int cnt = 0;
             foreach (var line in File.ReadLines(this.path))
@@ -32,7 +33,7 @@ namespace JankielsProj
                     int x = int.Parse(chunks[0]);
                     int y = int.Parse(chunks[1]);
                     cnt++;
-                    jankiels.Add(new Jankiel(x, y, $"Jankiel({x},{y})", jankielsCount));
+                    jankiels.Add(new Jankiel(x, y, $"{id}Jankiel({x},{y})", jankielsCount));
                 }
             }
             Debug.Assert(jankiels.Count == this.jankielsCount);
