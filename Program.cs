@@ -8,7 +8,6 @@ namespace JankielsProj
     {
         private readonly string filePath = "./positions.txt";
         private double hearingRange = 3.0d;
-        private int cntr = 0;
 
         private static double euclideanDistance (Jankiel a, Jankiel b)
         {
